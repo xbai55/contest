@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+out/
+target/
+dist/
+build/
+*.class
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Cache
+.cache/
+*.tsbuildinfo
+
+# Java compiled
+*.class
+*.jar
+
+# Zip files
+*.zip
+
+# Lock files (non-essential)
+skills-lock.json
+
+# Misc
+*.tmp
