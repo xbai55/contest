@@ -2,6 +2,7 @@ package com.campuspilot.http;
 
 import com.campuspilot.config.AppConfig;
 import com.campuspilot.service.AgentClient;
+import com.campuspilot.service.KingdeeDataClient;
 import com.campuspilot.store.InMemoryCampusPilotStore;
 import com.campuspilot.util.Json;
 import com.campuspilot.util.RequestUtil;
@@ -20,11 +21,13 @@ public final class ApiHandler implements HttpHandler {
     private final AppConfig config;
     private final InMemoryCampusPilotStore store;
     private final AgentClient agentClient;
+    private final KingdeeDataClient kingdeeDataClient;
 
-    public ApiHandler(AppConfig config, InMemoryCampusPilotStore store, AgentClient agentClient) {
+    public ApiHandler(AppConfig config, InMemoryCampusPilotStore store, AgentClient agentClient, KingdeeDataClient kingdeeDataClient) {
         this.config = config;
         this.store = store;
         this.agentClient = agentClient;
+        this.kingdeeDataClient = kingdeeDataClient;
     }
 
     @Override
@@ -65,15 +68,15 @@ public final class ApiHandler implements HttpHandler {
         switch (path) {
             case "/api/campuspilot/overview" -> sendJson(exchange, 200, store.overviewJson());
             case "/api/campuspilot/risk-distribution" -> sendJson(exchange, 200, store.riskDistributionJson());
-            case "/api/campuspilot/students" -> sendJson(exchange, 200, store.studentsJson(user));
-            case "/api/campuspilot/courses" -> sendJson(exchange, 200, store.coursesJson(user));
-            case "/api/campuspilot/behaviors" -> sendJson(exchange, 200, store.behaviorsJson(user));
-            case "/api/campuspilot/warnings" -> sendJson(exchange, 200, store.warningsJson(user));
+            case "/api/campuspilot/students" -> sendJson(exchange, 200, kingdeeDataClient.studentsJson(user));
+            case "/api/campuspilot/courses" -> sendJson(exchange, 200, kingdeeDataClient.coursesJson(user));
+            case "/api/campuspilot/behaviors" -> sendJson(exchange, 200, kingdeeDataClient.behaviorsJson(user));
+            case "/api/campuspilot/warnings" -> sendJson(exchange, 200, kingdeeDataClient.warningsJson(user));
             case "/api/campuspilot/workflow" -> sendJson(exchange, 200, store.workflowJson());
             case "/api/campuspilot/workflow-logs" -> sendJson(exchange, 200, store.workflowLogsJson());
             case "/api/campuspilot/risk-trend" -> sendJson(exchange, 200, store.riskTrendJson());
             case "/api/campuspilot/effectiveness" -> sendJson(exchange, 200, store.effectivenessJson());
-            case "/api/campuspilot/integration-status" -> sendJson(exchange, 200, store.integrationStatusJson());
+            case "/api/campuspilot/integration-status" -> sendJson(exchange, 200, kingdeeDataClient.integrationJson());
             case "/api/campuspilot/lowcode-blueprint" -> sendJson(exchange, 200, store.lowcodeBlueprintJson());
             case "/api/campuspilot/agent-workflow" -> sendJson(exchange, 200, store.agentWorkflowJson());
             case "/api/campuspilot/report-center" -> sendJson(exchange, 200, store.reportCenterJson());
@@ -144,6 +147,7 @@ public final class ApiHandler implements HttpHandler {
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, X-CampusPilot-User, X-CampusPilot-Role-Key");
         exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
         exchange.getResponseHeaders().set("X-CampusPilot-Agent-Mode", config.agentApiUrl().isBlank() ? "local-fallback" : "remote-proxy");
+        exchange.getResponseHeaders().set("X-CampusPilot-Data-Mode", kingdeeDataClient.dataMode());
         exchange.sendResponseHeaders(status, body.length);
         exchange.getResponseBody().write(body);
         exchange.close();

@@ -15,4 +15,7 @@ if (-not $sources) {
 }
 
 javac -encoding UTF-8 -d $out $sources
+if ($LASTEXITCODE -ne 0) {
+    throw "javac failed with exit code $LASTEXITCODE"
+}
 Write-Host "Build OK: $out"

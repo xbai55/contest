@@ -83,9 +83,14 @@ python server.py
 | `CAMPUSPILOT_AGENT_API_URL` | 金蝶苍穹 Agent API 地址 | 空（本地兜底） |
 | `CAMPUSPILOT_AGENT_API_KEY` | 金蝶 Agent API 密钥 | 空 |
 | `CAMPUSPILOT_AGENT_TIMEOUT_MS` | Agent 调用超时(ms) | `8000` |
+| `CAMPUSPILOT_KINGDEE_BASE_URL` | 金蝶苍穹业务对象 API 基础地址 | `http://127.0.0.1:8881/ierp` |
+| `CAMPUSPILOT_KINGDEE_ACCESS_TOKEN` | 后端访问金蝶业务对象的 accessToken | 空（本地兜底） |
+| `CAMPUSPILOT_KINGDEE_TIMEOUT_MS` | 金蝶业务对象 API 超时(ms) | `8000` |
 | `CAMPUSPILOT_WORKER_THREADS` | 工作线程数 | `12` |
 
 > 不配置 `CAMPUSPILOT_AGENT_API_URL` 时，Agent 问答使用本地规则引擎兜底，方便离线演示。
+>
+> 不配置 `CAMPUSPILOT_KINGDEE_ACCESS_TOKEN` 时，学生画像、课程成绩、学习行为和风险预警单继续使用本地数据；配置后由 Java 后端调用苍穹 API，并将 `data.rows` 转换为现有页面字段。不要把 accessToken 写入前端。
 
 ## 演示角色
 
@@ -153,4 +158,5 @@ campuspilot-server/src/main/java/com/campuspilot/
 ## KWC 接入文档
 
 - [`docs/CampusPilot_KWC苍穹接入说明.md`](docs/CampusPilot_KWC苍穹接入说明.md)：说明 `campuspilot-kwc` 的 KWC 组件目录、元数据属性、构建和部署方式。
+- [`docs/金蝶业务对象API接入说明.md`](docs/金蝶业务对象API接入说明.md)：说明四类苍穹业务对象 API、后端 Token 配置、字段转换与 Agent 实时上下文链路。
 - [`campuspilot-official-kwc/docs/CampusPilot_官方KWC接入说明.md`](campuspilot-official-kwc/docs/CampusPilot_官方KWC接入说明.md)：说明官方模板版本的结构和平台接入方式。

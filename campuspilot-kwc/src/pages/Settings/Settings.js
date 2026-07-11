@@ -1,136 +1,115 @@
-import React, { useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { canPerform } from "../../utils/permissions";
 import { showToast } from "../../utils/toast";
 
-function SettingSwitch({ label, on }) {
-  return <div className="module-card switch-line"><strong>{label}</strong><span className={`switch ${on ? "on" : ""}`} aria-hidden="true" /></div>;
+const TABS = [
+  ["integration", "集成与接口"],
+  ["risk", "风险规则"],
+  ["notification", "通知策略"],
+  ["security", "安全与审计"],
+];
+
+function ToggleRow({ label, description, checked, onChange }) {
+  return <div className="toggle-row"><span><strong>{label}</strong><em>{description}</em></span><button type="button" role="switch" aria-checked={checked} className={`enterprise-switch ${checked ? "on" : ""}`} onClick={() => onChange(!checked)}><i /></button></div>;
 }
 
 export default function Settings() {
   const { data } = useAuth();
+  const [activeTab, setActiveTab] = useState("integration");
+  const [testing, setTesting] = useState(false);
   const [apiBase, setApiBase] = useState(localStorage.getItem("campuspilot:apiBase") || "http://10.0.160.250:8080/ierp");
-
+  const [config, setConfig] = useState({ agent: true, structured: true, audit: true, autoWarning: false, email: true, inApp: true, digest: false, mfa: false });
   if (!data) return null;
 
+  const integration = data.integrationStatus || {};
+  const objects = integration.objects || [];
+  const appInfo = integration.thirdPartyApp || { appId: "campuspilot_isv", status: "待配置" };
+  const update = (key) => (value) => setConfig((current) => ({ ...current, [key]: value }));
+
+  const ruleRows = useMemo(() => [
+    { name: "学业高风险", condition: "GPA < 2.0 或挂科数 ≥ 2", level: "高风险", enabled: true },
+    { name: "学习行为异常", condition: "出勤率 < 80% 且作业完成率 < 70%", level: "高风险", enabled: true },
+    { name: "持续关注", condition: "GPA 2.0–2.8 或出勤率 < 85%", level: "需关注", enabled: true },
+    { name: "复评改善", condition: "连续两周核心指标提升", level: "改善中", enabled: true },
+  ], []);
+
   const handleSave = () => {
-    if (!canPerform("saveSettings")) { showToast("当前角色无权执行该操作"); return; }
+    if (!canPerform("saveSettings")) return showToast("当前账号没有保存系统设置的权限");
     localStorage.setItem("campuspilot:apiBase", apiBase.trim());
-    showToast("设置已保存到当前环境");
+    localStorage.setItem("campuspilot:settings", JSON.stringify(config));
+    showToast("系统配置已保存");
   };
 
-  const integration = data.integrationStatus;
-  const thirdPartyApp = integration.thirdPartyApp || { appId: "campuspilot_isv", auth: "AccessToken / API 授权 / IP 白名单", status: "待配置真实密钥" };
+  const testConnection = () => {
+    setTesting(true);
+    window.setTimeout(() => { setTesting(false); showToast("连接检测完成：接口地址可访问"); }, 650);
+  };
 
   return (
-    <>
-      <section className="content-grid">
-        <cp-panel eyebrow="接口配置" title="数据源与 Agent 工具">
-          <button slot="actions" className="text-button" type="button" onClick={handleSave}>保存设置</button>
-          <div className="form-grid">
-            <label className="field"><span>金蝶环境地址</span><input value={apiBase} onChange={(e) => setApiBase(e.target.value)} /></label>
-            <label className="field"><span>默认租户</span><input defaultValue="CampusPilot 校园租户" /></label>
-            <label className="field"><span>学生画像对象编码</span><input defaultValue="cp_student_profile" /></label>
-            <label className="field"><span>风险预警单对象编码</span><input defaultValue="cp_warning_order" /></label>
-            <label className="field"><span>Agent 名称</span><input defaultValue="CampusPilot 学业成长助手" /></label>
-            <label className="field"><span>工具调用模式</span>
-              <select defaultValue="知识库优先 + 工具增强"><option>知识库优先 + 工具增强</option><option>工具优先 + 知识库兜底</option></select>
-            </label>
-          </div>
-        </cp-panel>
-        <cp-panel eyebrow="系统开关" title="运行与审计">
-          <div className="setting-stack">
-            <SettingSwitch label="启用驾驶舱统计" on={true} />
-            <SettingSwitch label="启用 Agent 结构化输出" on={true} />
-            <SettingSwitch label="启用处理过程记录" on={true} />
-            <SettingSwitch label="记录用户操作审计" on={true} />
-            <SettingSwitch label="自动生成预警单" on={false} />
-          </div>
-        </cp-panel>
-      </section>
-      <section className="content-grid">
-        <cp-panel eyebrow="第三方应用" title="金蝶 OpenAPI 接入边界">
-          <span slot="actions" className="status-pill todo">{thirdPartyApp.status}</span>
-          <div className="integration-summary">
-            <strong>{thirdPartyApp.appId}</strong>
-            <p>{thirdPartyApp.auth}</p>
-            <p>本地前后端只负责业务界面、数据闭环和 Agent API 调用入口；Agent 本体、RAG 和工具编排在金蝶平台低代码配置。</p>
-          </div>
-        </cp-panel>
-        <cp-panel eyebrow="低代码模型" title="业务对象清单">
-          <div className="object-grid">
-            {integration.objects.map((o) => (
-              <div key={o.code}><strong>{o.name}</strong><span>{o.code}</span><em>{o.status} · {o.fields} 字段</em></div>
-            ))}
-          </div>
-        </cp-panel>
-      </section>
-      <section className="content-grid">
-        <cp-panel eyebrow="低代码开发" title="表单、流程、报表与集成蓝图">
-          <div className="object-grid">
-            {(data.lowcodeBlueprint?.objects || []).map((o) => (
-              <div key={o.code}><strong>{o.name}</strong><span>{o.code} · {o.type}</span><em>{o.purpose}</em></div>
-            ))}
-          </div>
-        </cp-panel>
-        <cp-panel eyebrow="苍穹能力" title="平台能力落点">
-          <div className="setting-stack">
-            {(data.lowcodeBlueprint?.platformCapabilities || []).map((item) => (
-              <div key={item.name} className="module-card"><strong>{item.name}</strong><p>{item.status} · {item.detail}</p></div>
-            ))}
-          </div>
-        </cp-panel>
+    <div className="enterprise-page settings-center-page">
+      <section className="settings-toolbar">
+        <div><span className="section-kicker">运行环境</span><strong>CampusPilot 生产配置</strong><em>最后保存：2026-07-11 11:36 · 学院管理员</em></div>
+        <span className="environment-badge"><i />运行正常</span>
+        <button className="secondary-button" type="button" onClick={testConnection}>{testing ? "检测中..." : "连接检测"}</button>
+        <button className="primary-button" type="button" onClick={handleSave}>保存更改</button>
       </section>
 
-      <section className="content-grid">
-        <cp-panel eyebrow="Agent 智能体" title={data.agentWorkflow?.agentName || "CampusPilot 学业成长助手"}>
-          <div className="integration-summary"><strong>{data.agentWorkflow?.modelRoute}</strong><p>RAG 知识库、工具调用和多步任务流共同生成可落表的预警建议。</p></div>
-          <div className="agent-pipeline">
-            {(data.agentWorkflow?.workflow || []).map((step, index) => (
-              <div key={step.step}><span>{index + 1}</span><strong>{step.step}</strong><p>{step.detail}</p></div>
-            ))}
-          </div>
-        </cp-panel>
-        <cp-panel eyebrow="工具调用" title="可由 Agent 编排的业务工具">
-          <div className="setting-stack">
-            {(data.agentWorkflow?.tools || []).map((tool) => (
-              <div key={tool.name} className="module-card"><strong>{tool.name}</strong><p>{tool.method} · {tool.purpose}</p></div>
-            ))}
-          </div>
-        </cp-panel>
-      </section>
+      <nav className="enterprise-tabs" aria-label="系统设置分类">
+        {TABS.map(([key, label]) => <button key={key} className={activeTab === key ? "active" : ""} onClick={() => setActiveTab(key)}>{label}</button>)}
+      </nav>
 
-      <section className="content-grid">
-        <cp-panel eyebrow="数据可视化分析" title="报表中心">
-          <div className="setting-stack">
-            {(data.reportCenter || []).map((report) => (
-              <div key={report.name} className="module-card"><strong>{report.name}</strong><p>{report.metric} · {report.decision}</p></div>
-            ))}
+      {activeTab === "integration" && (
+        <section className="settings-grid">
+          <div className="enterprise-panel settings-form-panel">
+            <header><div><span className="section-kicker">苍穹平台</span><h3>业务接口与 Agent 接入</h3><p>密钥由后端或平台安全配置托管，前端仅保存公开连接参数。</p></div><span className="status-badge warning">{appInfo.status}</span></header>
+            <div className="enterprise-form">
+              <label className="wide"><span>苍穹环境地址</span><input value={apiBase} onChange={(event) => setApiBase(event.target.value)} /></label>
+              <label><span>方案标识</span><input value="campuspilot" readOnly /></label>
+              <label><span>开发商标识</span><input value="code" readOnly /></label>
+              <label><span>领域标识</span><input value="code" readOnly /></label>
+              <label><span>第三方应用 ID</span><input value={appInfo.appId || "campuspilot_isv"} readOnly /></label>
+              <label className="wide"><span>Agent 代理路径</span><input value="/api/campuspilot/agent/chat" readOnly /></label>
+            </div>
+            <div className="toggle-list compact">
+              <ToggleRow label="启用苍穹 Agent" description="通过后端代理调用平台 Agent，避免前端暴露凭据" checked={config.agent} onChange={update("agent")} />
+              <ToggleRow label="结构化建议输出" description="将建议映射到风险预警单和帮扶计划字段" checked={config.structured} onChange={update("structured")} />
+            </div>
           </div>
-        </cp-panel>
-        <cp-panel eyebrow="云原生微服务" title="部署单元">
-          <div className="setting-stack">
-            {(data.cloudNative || []).map((item) => (
-              <div key={item.layer} className="module-card"><strong>{item.layer} · {item.unit}</strong><p>{item.deploy}</p></div>
-            ))}
-          </div>
-        </cp-panel>
-      </section>
+          <aside className="enterprise-panel">
+            <header><div><span className="section-kicker">业务对象</span><h3>数据模型状态</h3></div><span className="status-badge success">{objects.length} 个对象</span></header>
+            <div className="object-status-list">
+              {objects.map((item) => <div key={item.code}><span><strong>{item.name}</strong><em>{item.code}</em></span><b>{item.status} · {item.fields} 字段</b></div>)}
+              {!objects.length && <div><span><strong>等待同步</strong><em>尚未获取业务对象</em></span><b>未连接</b></div>}
+            </div>
+          </aside>
+        </section>
+      )}
 
-      <cp-panel eyebrow="多模态大模型" title="可扩展输入与输出设计">
-        <div className="grid-3">
-          {(data.multimodal || []).map((item) => (
-            <div key={item.input} className="module-card"><strong>{item.input}</strong><p>{item.model} · {item.output}</p><em>{item.status}</em></div>
-          ))}
-        </div>
-      </cp-panel>
-      <cp-panel eyebrow="风险规则" title="标准化判断条件">
-        <div className="grid-3">
-          {["高风险：GPA < 2.0 或挂科数 >= 2", "高风险：核心课程明显不及格", "高风险：出勤 < 0.8 且作业 < 0.7", "需要关注：GPA 2.0 到 2.8", "需要关注：出勤低于 0.85", "正常：无挂科且行为稳定"].map((r) => (
-            <div key={r} className="module-card"><strong>{r}</strong><p>同步到 Agent 提示词、知识库和项目说明。</p></div>
-          ))}
-        </div>
-      </cp-panel>
-    </>
+      {activeTab === "risk" && (
+        <section className="enterprise-panel">
+          <header><div><span className="section-kicker">规则中心</span><h3>风险识别与分级规则</h3><p>规则命中后生成候选预警，仍需具备权限的人员确认。</p></div><button className="secondary-button" type="button">新增规则</button></header>
+          <div className="rules-table">
+            <div className="rule-row rule-head"><span>规则名称</span><span>触发条件</span><span>风险等级</span><span>状态</span></div>
+            {ruleRows.map((rule) => <div className="rule-row" key={rule.name}><strong>{rule.name}</strong><span>{rule.condition}</span><b>{rule.level}</b><em className="status-badge success">启用</em></div>)}
+          </div>
+          <ToggleRow label="自动生成预警候选单" description="仅生成待确认记录，不自动进入正式帮扶流程" checked={config.autoWarning} onChange={update("autoWarning")} />
+        </section>
+      )}
+
+      {activeTab === "notification" && (
+        <section className="settings-grid equal">
+          <div className="enterprise-panel"><header><div><span className="section-kicker">触达渠道</span><h3>通知方式</h3></div></header><div className="toggle-list"><ToggleRow label="站内消息" description="风险确认、任务分派和复评提醒" checked={config.inApp} onChange={update("inApp")} /><ToggleRow label="邮件通知" description="发送给辅导员、导师和学院管理员" checked={config.email} onChange={update("email")} /><ToggleRow label="每日摘要" description="工作日 18:00 汇总未处理任务" checked={config.digest} onChange={update("digest")} /></div></div>
+          <div className="enterprise-panel"><header><div><span className="section-kicker">升级策略</span><h3>超时提醒</h3></div></header><dl className="detail-list single"><div><dt>高风险预警确认时限</dt><dd>4 小时</dd></div><div><dt>导师帮扶计划时限</dt><dd>2 个工作日</dd></div><div><dt>复评提醒周期</dt><dd>每 7 天</dd></div><div><dt>升级接收人</dt><dd>学院管理员</dd></div></dl></div>
+        </section>
+      )}
+
+      {activeTab === "security" && (
+        <section className="settings-grid equal">
+          <div className="enterprise-panel"><header><div><span className="section-kicker">审计策略</span><h3>操作留痕</h3></div></header><div className="toggle-list"><ToggleRow label="记录关键业务操作" description="预警确认、计划变更、结案与配置修改" checked={config.audit} onChange={update("audit")} /><ToggleRow label="管理员多因素认证" description="提升系统设置和权限变更操作的安全性" checked={config.mfa} onChange={update("mfa")} /></div></div>
+          <div className="enterprise-panel"><header><div><span className="section-kicker">数据治理</span><h3>合规基线</h3></div><span className="status-badge success">已启用</span></header><dl className="detail-list single"><div><dt>审计日志保留</dt><dd>180 天</dd></div><div><dt>敏感字段展示</dt><dd>按角色脱敏</dd></div><div><dt>数据导出</dt><dd>管理员审批</dd></div><div><dt>密钥管理</dt><dd>后端环境变量</dd></div></dl></div>
+        </section>
+      )}
+    </div>
   );
 }

@@ -15,11 +15,13 @@ import java.util.List;
 public final class AgentClient {
     private final AppConfig config;
     private final InMemoryCampusPilotStore store;
+    private final KingdeeDataClient kingdeeDataClient;
     private final HttpClient httpClient;
 
-    public AgentClient(AppConfig config, InMemoryCampusPilotStore store) {
+    public AgentClient(AppConfig config, InMemoryCampusPilotStore store, KingdeeDataClient kingdeeDataClient) {
         this.config = config;
         this.store = store;
+        this.kingdeeDataClient = kingdeeDataClient;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(config.agentTimeoutMs()))
                 .build();
@@ -43,7 +45,7 @@ public final class AgentClient {
             String body = Json.object(
                     Json.field("question", question),
                     Json.field("role", role == null ? "" : role),
-                    Json.rawField("campusContext", store.agentContextJson())
+                    Json.rawField("campusContext", kingdeeDataClient.agentContextJson())
             );
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(config.agentApiUrl()))

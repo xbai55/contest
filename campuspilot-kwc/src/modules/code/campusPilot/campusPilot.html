@@ -439,40 +439,49 @@
           </article>
         </section>
 
-        <section if:true={isUsers} class="panel page-stack">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">用户中心</p>
-              <h2>角色与人员</h2>
+        <section if:true={isUsers} class="enterprise-page native-enterprise-page">
+          <article class="account-banner">
+            <div class="account-identity">
+              <span class="account-avatar">{userInitial}</span>
+              <div><span class="section-kicker">当前账号</span><h2>{userName}</h2><p>counselor@campus.edu · 信息工程学院</p></div>
             </div>
+            <div class="account-summary"><span><b>{roleName}</b><em>当前角色</em></span><span><b>4</b><em>业务权限</em></span><span><b>3</b><em>数据范围</em></span><button class="secondary-button" type="button">切换账号</button></div>
+          </article>
+          <nav class="enterprise-tabs"><button class="active" type="button">账号概览</button><button type="button">权限与数据范围</button><button type="button">安全与活动</button></nav>
+          <div class="enterprise-layout">
+            <article class="enterprise-panel">
+              <div class="enterprise-head"><div><span class="section-kicker">岗位信息</span><h3>账号与组织归属</h3></div><span class="status-badge success">正常</span></div>
+              <div class="detail-list"><div><span>姓名</span><strong>{userName}</strong></div><div><span>角色</span><strong>{roleName}</strong></div><div><span>所属组织</span><strong>信息工程学院</strong></div><div><span>账号类型</span><strong>校内统一身份账号</strong></div><div><span>数据租户</span><strong>CampusPilot 校园租户</strong></div><div><span>账号有效期</span><strong>长期有效</strong></div></div>
+            </article>
+            <article class="enterprise-panel">
+              <div class="enterprise-head"><div><span class="section-kicker">操作记录</span><h3>最近活动</h3></div><span class="text-link">查看流程</span></div>
+              <div class="activity-list"><div><i></i><span><strong>查看高风险学生画像</strong><em>今天 11:36 · {userName}</em></span></div><div><i></i><span><strong>确认风险预警单 RW2026001</strong><em>昨天 18:47 · CampusPilot Agent</em></span></div><div><i></i><span><strong>更新导师帮扶措施</strong><em>昨天 18:55 · 陈导师</em></span></div></div>
+            </article>
           </div>
-          <div class="role-table">
-            <template for:each={roles} for:item="roleItem">
-              <section key={roleItem.role}>
-                <strong>{roleItem.role}</strong>
-                <span>{roleItem.actor}</span>
-                <p>{roleItem.duty}</p>
-              </section>
-            </template>
-          </div>
+          <article class="enterprise-panel">
+            <div class="enterprise-head"><div><span class="section-kicker">RBAC 权限模型</span><h3>当前角色授权清单</h3></div><span class="status-badge">{roleName}</span></div>
+            <div class="permission-matrix"><div><b>01</b><strong>查看风险学生</strong><em>已授权</em></div><div><b>02</b><strong>确认风险预警单</strong><em>已授权</em></div><div><b>03</b><strong>填写辅导员意见</strong><em>已授权</em></div><div><b>04</b><strong>跟踪处理状态</strong><em>已授权</em></div></div>
+          </article>
         </section>
 
-        <section if:true={isSettings} class="panel page-stack">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">系统设置</p>
-              <h2>预警参数</h2>
-            </div>
+        <section if:true={isSettings} class="enterprise-page native-enterprise-page">
+          <article class="settings-toolbar"><div><span class="section-kicker">运行环境</span><strong>CampusPilot 生产配置</strong><em>最后保存：2026-07-11 11:36 · 学院管理员</em></div><span class="environment-badge"><i></i>运行正常</span><button class="secondary-button" type="button">连接检测</button><button class="primary-button" type="button">保存更改</button></article>
+          <nav class="enterprise-tabs"><button class="active" type="button">集成与接口</button><button type="button">风险规则</button><button type="button">通知策略</button><button type="button">安全与审计</button></nav>
+          <div class="enterprise-layout settings-layout">
+            <article class="enterprise-panel">
+              <div class="enterprise-head"><div><span class="section-kicker">苍穹平台</span><h3>业务接口与 Agent 接入</h3><p>密钥由后端或平台安全配置托管，前端仅保存公开连接参数。</p></div><span class="status-badge warning">待配置密钥</span></div>
+              <div class="enterprise-form"><label class="wide"><span>苍穹环境地址</span><input value="http://10.0.160.250:8080/ierp" readonly></input></label><label><span>方案标识</span><input value="campuspilot" readonly></input></label><label><span>开发商标识</span><input value="code" readonly></input></label><label><span>领域标识</span><input value="code" readonly></input></label><label><span>第三方应用 ID</span><input value="campuspilot_isv" readonly></input></label><label class="wide"><span>Agent 代理路径</span><input value="/api/campuspilot/agent/chat" readonly></input></label></div>
+              <div class="toggle-list"><div><span><strong>启用苍穹 Agent</strong><em>通过后端代理调用平台 Agent</em></span><b class="enterprise-switch on"><i></i></b></div><div><span><strong>结构化建议输出</strong><em>映射到预警单和帮扶计划字段</em></span><b class="enterprise-switch on"><i></i></b></div></div>
+            </article>
+            <article class="enterprise-panel">
+              <div class="enterprise-head"><div><span class="section-kicker">治理基线</span><h3>规则与安全状态</h3></div><span class="status-badge success">已启用</span></div>
+              <div class="governance-list"><div><span><strong>高风险学业规则</strong><em>GPA &lt; 2.0 或挂科数 ≥ 2</em></span><b>启用</b></div><div><span><strong>学习行为异常</strong><em>出勤 &lt; 80% 且作业 &lt; 70%</em></span><b>启用</b></div><div><span><strong>操作审计</strong><em>关键业务操作保留 180 天</em></span><b>启用</b></div><div><span><strong>敏感字段策略</strong><em>按当前角色自动脱敏</em></span><b>启用</b></div></div>
+            </article>
           </div>
-          <div class="settings-list">
-            <template for:each={settingRows} for:item="setting">
-              <section key={setting.label}>
-                <span>{setting.label}</span>
-                <strong>{setting.value}</strong>
-                <p>{setting.note}</p>
-              </section>
-            </template>
-          </div>
+          <article class="enterprise-panel">
+            <div class="enterprise-head"><div><span class="section-kicker">业务对象</span><h3>平台数据模型</h3></div><span class="status-badge success">2 个对象</span></div>
+            <div class="object-status-grid"><div><span><strong>学生画像</strong><em>cp_student_profile</em></span><b>已建模 · 12 字段</b></div><div><span><strong>风险预警单</strong><em>cp_warning_order</em></span><b>已建模 · 13 字段</b></div><div><span><strong>站内通知</strong><em>高风险任务即时触达</em></span><b>已启用</b></div><div><span><strong>邮件摘要</strong><em>工作日 18:00 汇总</em></span><b>未启用</b></div></div>
+          </article>
         </section>
       </main>
     </div>

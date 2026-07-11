@@ -9,6 +9,9 @@ public record AppConfig(
         String agentApiUrl,
         String agentApiKey,
         int agentTimeoutMs,
+        String kingdeeBaseUrl,
+        String kingdeeAccessToken,
+        int kingdeeTimeoutMs,
         int workerThreads
 ) {
     public static AppConfig load(String[] args) {
@@ -23,6 +26,9 @@ public record AppConfig(
                 env("CAMPUSPILOT_AGENT_API_URL", ""),
                 env("CAMPUSPILOT_AGENT_API_KEY", ""),
                 parseInt(env("CAMPUSPILOT_AGENT_TIMEOUT_MS", "8000"), 8000),
+                stripTrailingSlash(env("CAMPUSPILOT_KINGDEE_BASE_URL", "http://127.0.0.1:8881/ierp")),
+                env("CAMPUSPILOT_KINGDEE_ACCESS_TOKEN", ""),
+                parseInt(env("CAMPUSPILOT_KINGDEE_TIMEOUT_MS", "8000"), 8000),
                 parseInt(env("CAMPUSPILOT_WORKER_THREADS", "12"), 12)
         );
     }
@@ -42,5 +48,13 @@ public record AppConfig(
         } catch (Exception ignored) {
             return fallback;
         }
+    }
+
+    private static String stripTrailingSlash(String value) {
+        String normalized = value == null ? "" : value.trim();
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 }

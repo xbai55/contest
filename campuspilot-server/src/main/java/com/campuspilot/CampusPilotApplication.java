@@ -4,6 +4,7 @@ import com.campuspilot.config.AppConfig;
 import com.campuspilot.http.ApiHandler;
 import com.campuspilot.http.StaticFileHandler;
 import com.campuspilot.service.AgentClient;
+import com.campuspilot.service.KingdeeDataClient;
 import com.campuspilot.store.InMemoryCampusPilotStore;
 import com.sun.net.httpserver.HttpServer;
 
@@ -17,10 +18,11 @@ public final class CampusPilotApplication {
     public static void main(String[] args) throws Exception {
         AppConfig config = AppConfig.load(args);
         InMemoryCampusPilotStore store = new InMemoryCampusPilotStore(config);
-        AgentClient agentClient = new AgentClient(config, store);
+        KingdeeDataClient kingdeeDataClient = new KingdeeDataClient(config, store);
+        AgentClient agentClient = new AgentClient(config, store, kingdeeDataClient);
 
         HttpServer server = HttpServer.create(new InetSocketAddress(config.host(), config.port()), 0);
-        server.createContext("/api/campuspilot", new ApiHandler(config, store, agentClient));
+        server.createContext("/api/campuspilot", new ApiHandler(config, store, agentClient, kingdeeDataClient));
         server.createContext("/", new StaticFileHandler(config.staticRoot()));
         server.setExecutor(Executors.newFixedThreadPool(config.workerThreads()));
         server.start();
@@ -29,5 +31,6 @@ public final class CampusPilotApplication {
         System.out.println("  URL: http://" + config.hostForLog() + ":" + config.port() + "/index.html#dashboard");
         System.out.println("  Static root: " + config.staticRoot());
         System.out.println("  Agent mode: " + (config.agentApiUrl().isBlank() ? "local fallback" : "remote API proxy"));
+        System.out.println("  Kingdee data mode: " + kingdeeDataClient.dataMode());
     }
 }

@@ -30,6 +30,11 @@ CAMPUSPILOT_STATIC_ROOT=/opt/campuspilot/campuspilot-home
 CAMPUSPILOT_AGENT_API_URL=https://你的金蝶Agent接口地址
 CAMPUSPILOT_AGENT_API_KEY=你的接口密钥
 CAMPUSPILOT_AGENT_TIMEOUT_MS=8000
+CAMPUSPILOT_KINGDEE_BASE_URL=http://127.0.0.1:8881/ierp
+CAMPUSPILOT_KINGDEE_ACCESS_TOKEN=你的accessToken
+CAMPUSPILOT_KINGDEE_TIMEOUT_MS=8000
 ```
 
-只要前端和后端目录一起上传，云主机上改 `CAMPUSPILOT_AGENT_API_URL` 和 `CAMPUSPILOT_AGENT_API_KEY` 就能切换到真实金蝶 Agent。
+`CAMPUSPILOT_KINGDEE_ACCESS_TOKEN` 配置后，学生画像、课程成绩、学习行为和风险预警单会优先读取金蝶业务对象 API；调用失败时自动回退到本地演示数据。Token 只保存在 Java 后端环境变量中，不能写入 KWC 前端。
+
+`CAMPUSPILOT_AGENT_API_URL` 和 `CAMPUSPILOT_AGENT_API_KEY` 用于真实金蝶 Agent。Agent 调用时会把上述四类实时业务对象数据放入 `campusContext`，使回答不再只依赖静态知识库。
